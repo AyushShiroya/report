@@ -1,16 +1,28 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
+import { addClient, addContractor, addJobForm } from '../../redux/formSlice';
 import Modal from '../common/Modal';
 import ClientForm from './ClientForm';
 import Contractor from './Contractor';
+import { RootState } from '../../redux/store';
+import { v4 as uuidv4 } from 'uuid';
+
+interface FileMetadata {
+  name: string;
+  size: number;
+  type: string;
+  lastModified: number;
+  previewUrl?: string;
+}
 
 interface FormValues {
-  client: string;
-  contractor: string;
+  clientId: string;
+  contractorId: string;
   workName: string;
-  document: File | null;
+  documents: FileMetadata[];
   agreementNumber: number;
   pmc: string;
   witness: string;
@@ -22,86 +34,148 @@ interface FormValues {
   inwardNumber: number;
 }
 
+
 const JobInward: React.FC = () => {
+  const dispatch = useDispatch();
+  const { clients, contractors, jobForms } = useSelector((state: RootState) => state.form);
+
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<FormValues>();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const [selectedFiles, setSelectedFiles] = useState<FileMetadata[]>([]);
   const [isClientModalOpen, setClientModalOpen] = useState(false);
   const [isContractorModalOpen, setContractorModalOpen] = useState(false);
-  const [clients, setClients] = useState<string[]>([]);
-  const [contractors, setContractors] = useState<string[]>([]);
 
-  // Ref for the file input
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      selectedFiles.forEach(file => {
+        if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+      });
+    };
+  }, [selectedFiles]);
+
   const onSubmit: SubmitHandler<FormValues> = (data) => {
-    alert("Form submitted successfully!");
-    console.log(data);
-    // Handle form submission
+    const selectedClient = clients.find(client => client.id === data.clientId);
+    const selectedContractor = contractors.find(contractor => contractor.id === data.contractorId);
+
+    if (!selectedClient || !selectedContractor) {
+      alert("Please select both Authority and Agency");
+      return;
+    }
+
+    const jobFormData = {
+      client: selectedClient,
+      contractor: selectedContractor,
+      workName: data.workName,
+      documents: selectedFiles,
+      agreementNumber: data.agreementNumber,
+      pmc: data.pmc,
+      witness: data.witness,
+      thirdTitle: data.thirdTitle,
+      fourthTitle: data.fourthTitle,
+      letterNo: data.letterNo,
+      letterDate: data.letterDate,
+      sampleReceivedDate: data.sampleReceivedDate,
+      inwardNumber: data.inwardNumber,
+    };
+
+    dispatch(addJobForm(jobFormData as any));
+    alert("Job form submitted successfully!");
+    console.log("All job forms:", jobForms);
+
+    // Reset form
+    reset();
+    setSelectedFiles([]);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setSelectedFile(file);
-    setValue("document", file, { shouldValidate: true });
-  };
-
-  const handleFileRemove = () => {
-    setSelectedFile(null);
-    setValue("document", null, { shouldValidate: true });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      const fileMetadata = await Promise.all(newFiles.map(async (file) => {
+        let previewUrl;
+        if (file.type.startsWith("image/")) {
+          previewUrl = URL.createObjectURL(file);
+        }
+        return {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+          previewUrl
+        };
+      }));
+      
+      setSelectedFiles((prevFiles) => [...prevFiles, ...fileMetadata]);
+      setValue("documents", [...selectedFiles, ...fileMetadata], { shouldValidate: true });
     }
   };
 
+  const handleFileRemove = (index: number) => {
+    const fileToRemove = selectedFiles[index];
+    if (fileToRemove.previewUrl) {
+      URL.revokeObjectURL(fileToRemove.previewUrl);
+    }
+    
+    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
+    setSelectedFiles(updatedFiles);
+    setValue("documents", updatedFiles, { shouldValidate: true });
+  };
   return (
     <div className="max-w-7xl mx-auto p-4 bg-gray-50 rounded-xl shadow-lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-6 gap-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-6 gap-3">
         {/* Client Selection */}
         <div className="col-span-6 sm:col-span-3">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">Client</label>
+            <label className="block text-sm font-medium text-gray-700">Authority </label>
             <button
               type="button"
               className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onClick={() => setClientModalOpen(true)}
             >
-              + Add New Client
+              + Add New Authority
             </button>
           </div>
           <select
-            {...register('client', { required: 'Client is required' })}
+            {...register('clientId', { required: 'Authority is required' })}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">Select a client</option>
-            {clients.map((client, index) => (
-              <option key={index} value={client}>{client}</option>
+            <option value="">Select a Authority</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.clientName}
+              </option>
             ))}
           </select>
-          {errors.client && <p className="text-red-500 text-sm mt-1">{errors.client.message}</p>}
+          {errors.clientId && <p className="text-red-500 text-sm mt-1">{errors.clientId.message}</p>}
         </div>
 
         {/* Contractor Selection */}
         <div className="col-span-6 sm:col-span-3">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">Contractor</label>
+            <label className="block text-sm font-medium text-gray-700">Agency</label>
             <button
               type="button"
               className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onClick={() => setContractorModalOpen(true)}
             >
-              + Add New Contractor
+              + Add New Agency
             </button>
           </div>
           <select
-            {...register('contractor', { required: 'Contractor is required' })}
+            {...register('contractorId', { required: 'Agency is required' })}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">Select a contractor</option>
-            {contractors.map((contractor, index) => (
-              <option key={index} value={contractor}>{contractor}</option>
+            <option value="">Select a Agency</option>
+            {contractors.map((contractor) => (
+              <option key={contractor.id} value={contractor.id}>
+                {contractor.ContractorName}
+              </option>
             ))}
           </select>
-          {errors.contractor && <p className="text-red-500 text-sm mt-1">{errors.contractor.message}</p>}
+          {errors.contractorId && <p className="text-red-500 text-sm mt-1">{errors.contractorId.message}</p>}
         </div>
 
         {/* Name of Work */}
@@ -110,68 +184,74 @@ const JobInward: React.FC = () => {
           <textarea
             {...register('workName', { required: 'Name of work is required' })}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={3}
+            rows={1}
           />
           {errors.workName && <p className="text-red-500 text-sm mt-1">{errors.workName.message}</p>}
         </div>
 
         {/* Document Upload */}
-        <div className="col-span-6">
-          <label className="block text-sm font-medium text-gray-700">Document Upload</label>
-          <div
-            className="mt-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-blue-500 bg-white"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {selectedFile ? (
-              <div className="text-center">
-                <p className="text-sm text-gray-700">{selectedFile.name}</p>
-                <button
-                  type="button"
-                  className="mt-2 px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
-                  onClick={handleFileRemove}
-                >
-                  Remove
-                </button>
-              </div>
-            ) : (
-              <>
-                <svg
-                  className="w-8 h-8 text-gray-400 mb-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
-                <p className="text-sm text-gray-500">Drag & drop a file or click to upload</p>
-                <p className="text-xs text-gray-400 mt-1">Supported formats: PDF, DOC, XLSX</p>
-              </>
-            )}
-          </div>
+        <div className='col-span-6 sm:col-span-3'>
+          <label className="block text-sm font-medium text-gray-700">Upload Documents</label>
           <input
             type="file"
-            className="hidden"
-            onChange={handleFileChange}
+            multiple
             ref={fileInputRef}
+            onChange={handleFileChange}
+            className="mt-1 w-full p-2 border rounded-md"
           />
-          {errors.document && <p className="text-red-500 text-sm mt-1">{errors.document.message}</p>}
+          <div className="mt-2 grid grid-cols-4 gap-2">
+            {selectedFiles.map((file, index) => (
+              <div key={index} className="relative w-20 h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                {file.type.startsWith("image/") && file.previewUrl ? (
+                  <img
+                    src={file.previewUrl}
+                    alt={file.name}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                ) : file.type === "application/pdf" ? (
+                  <div className="flex items-center justify-center w-full h-full bg-red-50 rounded-lg">
+                    <span className="text-red-500 font-bold text-sm">PDF</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full bg-blue-50 rounded-lg">
+                    <span className="text-blue-500 font-bold text-sm">DOC</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleFileRemove(index)}
+                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
+
         {/* Agreement Number */}
-        <div className="col-span-6 sm:col-span-6">
+        <div className='col-span-6 sm:col-span-3'>
           <label className="block text-sm font-medium text-gray-700">Agreement Number</label>
           <input
             type="text"
             {...register('agreementNumber', { required: 'Agreement number is required' })}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          {errors.agreementNumber && <p className="text-red-500 text-sm mt-1">{errors.agreementNumber.message}</p>}
+          {errors.agreementNumber && (
+            <p className="text-red-500 text-sm mt-1">{errors.agreementNumber.message}</p>
+          )}
         </div>
 
         {/* Divider */}
@@ -196,9 +276,6 @@ const JobInward: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700">Fourth Title</label>
           <input {...register('fourthTitle')} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" />
         </div>
-
-        {/* Divider */}
-        {/* <div className="col-span-6 border-t-2 border-gray-300"></div> */}
 
         {/* Highlighted Fields */}
         <div className="col-span-6 sm:col-span-3">
@@ -249,12 +326,24 @@ const JobInward: React.FC = () => {
       <Modal
         isOpen={isClientModalOpen || isContractorModalOpen}
         onClose={isClientModalOpen ? () => setClientModalOpen(false) : () => setContractorModalOpen(false)}
-        title={isClientModalOpen ? "Add New Client" : "Add New Contractor"}
+        title={isClientModalOpen ? "Add New Authority" : "Add New Agency"}
       >
         {isClientModalOpen ? (
-          <ClientForm setClients={setClients} closeModal={() => setClientModalOpen(false)} />
+          <ClientForm
+            onSubmit={(clientData) => {
+              dispatch(addClient(clientData));
+              setClientModalOpen(false);
+            }}
+            closeModal={() => setClientModalOpen(false)}
+          />
         ) : (
-          <Contractor setContractors={setContractors} closeModal={() => setContractorModalOpen(false)} />
+          <Contractor
+            onSubmit={(contractorData) => {
+              dispatch(addContractor(contractorData));
+              setContractorModalOpen(false);
+            }}
+            closeModal={() => setContractorModalOpen(false)}
+          />
         )}
       </Modal>
     </div>

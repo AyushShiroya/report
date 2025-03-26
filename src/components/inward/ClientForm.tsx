@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 
@@ -12,10 +14,10 @@ type FormValues = {
 };
 
 interface ClientFormProps {
-    setClients: React.Dispatch<React.SetStateAction<string[]>>;
+    onSubmit: (clientData: Omit<FormValues, 'id'>) => void;
     closeModal: () => void;
 }
-const ClientForm: React.FC<ClientFormProps> = ({ setClients, closeModal }) => {
+const ClientForm: React.FC<ClientFormProps> = ({ onSubmit, closeModal }) => {
     const {
         register,
         handleSubmit,
@@ -23,21 +25,21 @@ const ClientForm: React.FC<ClientFormProps> = ({ setClients, closeModal }) => {
         reset
     } = useForm<FormValues>();
 
-    const onSubmit: SubmitHandler<FormValues> = (data) => {
+    const handleFormSubmit: SubmitHandler<FormValues> = (data) => {
         console.log(data);
-        setClients(prevClients => [...prevClients, data.clientName]);
+        onSubmit(data); // Call the onSubmit prop with the client name
         reset();
         closeModal();
-    };
+      };
 
     return (
         <form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(handleFormSubmit)}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-3"
         >
             {/* Client Name */}
             <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700">Client Name</label>
+                <label className="block text-sm font-medium text-gray-700">Authority Name</label>
                 <input
                     {...register('clientName', { required: true })}
                     type="text"
@@ -50,7 +52,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ setClients, closeModal }) => {
 
             {/* Client Mobile Number */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Client Mobile Number</label>
+                <label className="block text-sm font-medium text-gray-700">Authority Mobile Number</label>
                 <input
                     {...register('clientMobileNumber', { required: true })}
                     type="number"
@@ -63,7 +65,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ setClients, closeModal }) => {
 
             {/* Client Email ID */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Client Email ID</label>
+                <label className="block text-sm font-medium text-gray-700">Authority Email ID</label>
                 <input
                     {...register('clientEmailId', { required: true })}
                     type="email"
@@ -76,7 +78,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ setClients, closeModal }) => {
 
             {/* Client Address */}
             <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700">Client Address</label>
+                <label className="block text-sm font-medium text-gray-700">Authority Address</label>
                 <textarea
                     {...register('clientAddress', { required: true })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -108,7 +110,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ setClients, closeModal }) => {
 
             {/* Client Pin Code */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Client Pin Code</label>
+                <label className="block text-sm font-medium text-gray-700">Authority Pin Code</label>
                 <input
                     {...register('clientPinCode', { required: true })}
                     type="number"
@@ -121,7 +123,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ setClients, closeModal }) => {
 
             {/* Client GST Number */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Client GST Number</label>
+                <label className="block text-sm font-medium text-gray-700">Authority GST Number</label>
                 <input
                     {...register('clientGstNumber', { required: true })}
                     type="text"
@@ -138,7 +140,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ setClients, closeModal }) => {
                     type="submit"
                     className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                    Add Client
+                    Add Authority
                 </button>
             </div>
         </form>

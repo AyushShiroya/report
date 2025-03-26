@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 
@@ -12,10 +14,10 @@ type FormValues = {
 };
 
 interface ContractorFormProps {
-    setContractors: React.Dispatch<React.SetStateAction<string[]>>;
+    onSubmit: (contractorData: Omit<FormValues, 'id'>) => void;
     closeModal: () => void;
 }
-const Contractor: React.FC<ContractorFormProps> = ({ setContractors, closeModal }) => {
+const Contractor: React.FC<ContractorFormProps> = ({ onSubmit, closeModal }) => {
     const {
         register,
         handleSubmit,
@@ -23,21 +25,22 @@ const Contractor: React.FC<ContractorFormProps> = ({ setContractors, closeModal 
         reset
     } = useForm<FormValues>();
 
-    const onSubmit: SubmitHandler<FormValues> = (data) => {
+    const handleFormSubmit: SubmitHandler<FormValues> = (data) => {
         console.log(data);
-        setContractors(prevContractors => [...prevContractors, data.ContractorName]);
+        onSubmit(data); // Call the onSubmit prop with the contractor name
         reset();
         closeModal();
-    };
+      };
+    
 
     return (
         <form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(handleFormSubmit)}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-3"
         >
             {/* Contractor Name */}
             <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700">Contractor Name</label>
+                <label className="block text-sm font-medium text-gray-700">Agency Name</label>
                 <input
                     {...register('ContractorName', { required: true })}
                     type="text"
@@ -50,7 +53,7 @@ const Contractor: React.FC<ContractorFormProps> = ({ setContractors, closeModal 
 
             {/* Contractor Mobile Number */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Contractor Mobile Number</label>
+                <label className="block text-sm font-medium text-gray-700">Agency Mobile Number</label>
                 <input
                     {...register('ContractorMobileNumber', { required: true })}
                     type="number"
@@ -63,7 +66,7 @@ const Contractor: React.FC<ContractorFormProps> = ({ setContractors, closeModal 
 
             {/* Contractor Email ID */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Contractor Email ID</label>
+                <label className="block text-sm font-medium text-gray-700">Agency Email ID</label>
                 <input
                     {...register('ContractorEmailId', { required: true })}
                     type="email"
@@ -76,7 +79,7 @@ const Contractor: React.FC<ContractorFormProps> = ({ setContractors, closeModal 
 
             {/* Contractor Address */}
             <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700">Contractor Address</label>
+                <label className="block text-sm font-medium text-gray-700">Agency Address</label>
                 <textarea
                     {...register('ContractorAddress', { required: true })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -108,7 +111,7 @@ const Contractor: React.FC<ContractorFormProps> = ({ setContractors, closeModal 
 
             {/* Contractor Pin Code */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Contractor Pin Code</label>
+                <label className="block text-sm font-medium text-gray-700">Agency Pin Code</label>
                 <input
                     {...register('ContractorPinCode', { required: true })}
                     type="number"
@@ -121,7 +124,7 @@ const Contractor: React.FC<ContractorFormProps> = ({ setContractors, closeModal 
 
             {/* Contractor GST Number */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Contractor GST Number</label>
+                <label className="block text-sm font-medium text-gray-700">Agency GST Number</label>
                 <input
                     {...register('ContractorGstNumber', { required: true })}
                     type="text"
@@ -138,7 +141,7 @@ const Contractor: React.FC<ContractorFormProps> = ({ setContractors, closeModal 
                     type="submit"
                     className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                    Add Contractor
+                    Add Agency
                 </button>
             </div>
         </form>

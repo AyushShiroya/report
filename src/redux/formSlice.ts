@@ -60,9 +60,9 @@ const formSlice = createSlice({
   initialState,
   reducers: {
     addClient(state, action: PayloadAction<Omit<Client, 'id'>>) {
-      const existingClient = state.clients.find(
-        client => client.clientName === action.payload.clientName
-      );
+      // const existingClient = state.clients.find(
+      //   client => client.clientName === action.payload.clientName
+      // );
       // if (!existingClient) {
       //   state.clients.push({
       //     id: uuidv4(),

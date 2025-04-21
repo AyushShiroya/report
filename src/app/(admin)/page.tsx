@@ -8,8 +8,6 @@ import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "@/components/ecommerce/StatisticsChart";
 import RecentOrders from "@/components/ecommerce/RecentOrders";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/redux/store';
 import axios from "axios";
 
 // export const metadata: Metadata = {
@@ -42,7 +40,6 @@ export default function Ecommerce() {
   // const jobForms = useSelector((state: RootState) => state.form.jobForms);
   const [jobForms, setJobForms] = useState<JobFormData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,7 +80,6 @@ export default function Ecommerce() {
           throw new Error(response.data.message || 'Failed to fetch data');
         }
       } catch (err: any) {
-        setError(err.message || 'An error occurred while fetching data');
         console.error("API Error:", err);
       } finally {
         setLoading(false);

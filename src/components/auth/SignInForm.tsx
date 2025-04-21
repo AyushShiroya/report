@@ -2,7 +2,7 @@
 import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
+import { EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -15,15 +15,15 @@ type FormData = {
   password: string;
 };
 
-type ApiResponse = {
-  token?: string;
-  message?: string;
-  user?: {
-    id: string;
-    email: string;
-    // Add other user properties as needed
-  };
-};
+// type ApiResponse = {
+//   token?: string;
+//   message?: string;
+//   user?: {
+//     id: string;
+//     email: string;
+//     // Add other user properties as needed
+//   };
+// };
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState<boolean>(false);

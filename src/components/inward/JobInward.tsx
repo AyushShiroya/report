@@ -39,7 +39,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 const JobInward: React.FC = () => {
   const dispatch = useDispatch();
-  const { clients, contractors, jobForms } = useSelector((state: RootState) => state.form);
+  const { clients, contractors } = useSelector((state: RootState) => state.form);
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<FormValues>();
 
   const [selectedFiles, setSelectedFiles] = useState<FileMetadata[]>([]);
@@ -47,7 +47,7 @@ const JobInward: React.FC = () => {
   const [isContractorModalOpen, setContractorModalOpen] = useState(false);
   const [authorities, setAuthorities] = useState<any[]>([]);
   const [agency, setAgency] = useState<any[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -205,7 +205,7 @@ const JobInward: React.FC = () => {
     setValue("documents", updatedFiles, { shouldValidate: true });
   }, [selectedFiles, setValue]);
 
-  const renderFilePreview = (file: FileMetadata, index: number) => {
+  const renderFilePreview = (file: FileMetadata, _index: number) => {
     if (file.type.startsWith("image/") && file.previewUrl) {
       return (
         <img

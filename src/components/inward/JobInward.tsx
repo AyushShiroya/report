@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { addClient, addContractor, addJobForm } from '../../redux/formSlice';
@@ -8,7 +8,8 @@ import Modal from '../common/Modal';
 import ClientForm from './ClientForm';
 import Contractor from './Contractor';
 import { RootState } from '../../redux/store';
-import { v4 as uuidv4 } from 'uuid';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 interface FileMetadata {
   name: string;
@@ -34,20 +35,23 @@ interface FormValues {
   inwardNumber: number;
 }
 
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const JobInward: React.FC = () => {
   const dispatch = useDispatch();
   const { clients, contractors, jobForms } = useSelector((state: RootState) => state.form);
-
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<FormValues>();
 
   const [selectedFiles, setSelectedFiles] = useState<FileMetadata[]>([]);
   const [isClientModalOpen, setClientModalOpen] = useState(false);
   const [isContractorModalOpen, setContractorModalOpen] = useState(false);
+  const [authorities, setAuthorities] = useState<any[]>([]);
+  const [agency, setAgency] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Clean up object URLs when component unmounts
+  // Clean up file URLs on unmount
   useEffect(() => {
     return () => {
       selectedFiles.forEach(file => {
@@ -56,49 +60,126 @@ const JobInward: React.FC = () => {
     };
   }, [selectedFiles]);
 
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
-    const selectedClient = clients.find(client => client.id === data.clientId);
-    const selectedContractor = contractors.find(contractor => contractor.id === data.contractorId);
-
-    if (!selectedClient || !selectedContractor) {
-      alert("Please select both Authority and Agency");
-      return;
-    }
-
-    const jobFormData = {
-      client: selectedClient,
-      contractor: selectedContractor,
-      workName: data.workName,
-      documents: selectedFiles,
-      agreementNumber: data.agreementNumber,
-      pmc: data.pmc,
-      witness: data.witness,
-      thirdTitle: data.thirdTitle,
-      fourthTitle: data.fourthTitle,
-      letterNo: data.letterNo,
-      letterDate: data.letterDate,
-      sampleReceivedDate: data.sampleReceivedDate,
-      inwardNumber: data.inwardNumber,
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      await Promise.all([fetchAuthorities(), fetchAgency()]);
     };
+    fetchInitialData();
+  }, []);
 
-    dispatch(addJobForm(jobFormData as any));
-    alert("Job form submitted successfully!");
-    console.log("All job forms:", jobForms);
+  const fetchData = useCallback(async (endpoint: string, setData: (data: any[]) => void) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Authentication token not found', { autoClose: 1000 });
+        return;
+      }
 
-    // Reset form
-    reset();
-    setSelectedFiles([]);
-  };
+      const response = await axios.get(`${API_BASE_URL}/${endpoint}`, {
+        headers: { 'Authorization': token }
+      });
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      const fileMetadata = await Promise.all(newFiles.map(async (file) => {
-        let previewUrl;
-        if (file.type.startsWith("image/")) {
-          previewUrl = URL.createObjectURL(file);
+      if (response.data.success) {
+        setData(response.data.data);
+      }
+    } catch (error) {
+      console.error(`Error fetching ${endpoint}:`, error);
+      toast.error(`Failed to fetch ${endpoint}`, { autoClose: 1000 });
+    }
+  }, []);
+
+  const fetchAuthorities = useCallback(() => fetchData('jobinwards', setAuthorities), [fetchData]);
+  const fetchAgency = useCallback(() => fetchData('agency', setAgency), [fetchData]);
+
+  const onSubmit: SubmitHandler<FormValues> = useCallback(async (data) => {
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Authentication token not found', { autoClose: 1000 });
+        return;
+      }
+
+      // Create FormData object
+      const formData = new FormData();
+
+      // Append all form fields
+      formData.append('clientId', data.clientId);
+      formData.append('contractorId', data.contractorId);
+      formData.append('workName', data.workName);
+      formData.append('agreementNumber', data.agreementNumber.toString());
+      formData.append('pmc', data.pmc);
+      formData.append('witness', data.witness);
+      formData.append('thirdTitle', data.thirdTitle);
+      formData.append('fourthTitle', data.fourthTitle);
+      formData.append('letterNo', data.letterNo.toString());
+      formData.append('letterDate', data.letterDate);
+      formData.append('sampleReceivedDate', data.sampleReceivedDate);
+      formData.append('inwardNumber', data.inwardNumber.toString());
+
+      // Append files if they exist
+      if (fileInputRef.current?.files) {
+        for (let i = 0; i < fileInputRef.current.files.length; i++) {
+          formData.append('documents', fileInputRef.current.files[i]);
         }
+      }
+
+      // Make the API call
+      const response = await axios.post(`${API_BASE_URL}/alljobinwards`, formData, {
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        // Update local state if needed
+        const selectedClient = clients.find(client => client.id === data.clientId);
+        const selectedContractor = contractors.find(contractor => contractor.id === data.contractorId);
+
+        const jobFormData = {
+          client: selectedClient,
+          contractor: selectedContractor,
+          workName: data.workName,
+          documents: selectedFiles,
+          agreementNumber: data.agreementNumber,
+          pmc: data.pmc,
+          witness: data.witness,
+          thirdTitle: data.thirdTitle,
+          fourthTitle: data.fourthTitle,
+          letterNo: data.letterNo,
+          letterDate: data.letterDate,
+          sampleReceivedDate: data.sampleReceivedDate,
+          inwardNumber: data.inwardNumber,
+        };
+
+        dispatch(addJobForm(jobFormData as any));
+        toast.success("Job form submitted successfully!");
+
+        // Reset form
+        reset();
+        setSelectedFiles([]);
+      } else {
+        toast.error(response.data.message || "Failed to submit job form");
+      }
+    } catch (error) {
+      console.error("Error submitting job form:", error);
+      toast.error("An error occurred while submitting the job form");
+    }
+    finally {
+      setIsSubmitting(false);
+    }
+  }, [clients, contractors, dispatch, reset]);
+
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles = await Promise.all(
+      Array.from(files).map(async (file) => {
+        const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;
         return {
           name: file.name,
           size: file.size,
@@ -106,30 +187,53 @@ const JobInward: React.FC = () => {
           lastModified: file.lastModified,
           previewUrl
         };
-      }));
-      
-      setSelectedFiles((prevFiles) => [...prevFiles, ...fileMetadata]);
-      setValue("documents", [...selectedFiles, ...fileMetadata], { shouldValidate: true });
-    }
-  };
+      })
+    );
 
-  const handleFileRemove = (index: number) => {
+    setSelectedFiles(prevFiles => [...prevFiles, ...newFiles]);
+    setValue("documents", [...selectedFiles, ...newFiles], { shouldValidate: true });
+  }, [selectedFiles, setValue]);
+
+  const handleFileRemove = useCallback((index: number) => {
     const fileToRemove = selectedFiles[index];
     if (fileToRemove.previewUrl) {
       URL.revokeObjectURL(fileToRemove.previewUrl);
     }
-    
+
     const updatedFiles = selectedFiles.filter((_, i) => i !== index);
     setSelectedFiles(updatedFiles);
     setValue("documents", updatedFiles, { shouldValidate: true });
+  }, [selectedFiles, setValue]);
+
+  const renderFilePreview = (file: FileMetadata, index: number) => {
+    if (file.type.startsWith("image/") && file.previewUrl) {
+      return (
+        <img
+          src={file.previewUrl}
+          alt={file.name}
+          className="w-full h-full object-cover rounded-lg"
+        />
+      );
+    }
+
+    const bgColor = file.type === "application/pdf" ? "bg-red-50" : "bg-blue-50";
+    const textColor = file.type === "application/pdf" ? "text-red-500" : "text-blue-500";
+    const fileType = file.type === "application/pdf" ? "PDF" : "DOC";
+
+    return (
+      <div className={`flex items-center justify-center w-full h-full ${bgColor} rounded-lg`}>
+        <span className={`${textColor} font-bold text-sm`}>{fileType}</span>
+      </div>
+    );
   };
+
   return (
     <div className="max-w-7xl mx-auto p-4 bg-gray-50 rounded-xl shadow-lg">
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-6 gap-3">
         {/* Client Selection */}
         <div className="col-span-6 sm:col-span-3">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">Authority </label>
+            <label className="block text-sm font-medium text-gray-700">Authority</label>
             <button
               type="button"
               className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -143,9 +247,9 @@ const JobInward: React.FC = () => {
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select a Authority</option>
-            {clients.map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.clientName}
+            {authorities.map((authority) => (
+              <option key={authority._id} value={authority._id}>
+                {authority.clientName}
               </option>
             ))}
           </select>
@@ -169,9 +273,9 @@ const JobInward: React.FC = () => {
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select a Agency</option>
-            {contractors.map((contractor) => (
-              <option key={contractor.id} value={contractor.id}>
-                {contractor.ContractorName}
+            {agency.map((agency) => (
+              <option key={agency._id} value={agency._id}>
+                {agency.ContractorName}
               </option>
             ))}
           </select>
@@ -202,25 +306,12 @@ const JobInward: React.FC = () => {
           <div className="mt-2 grid grid-cols-4 gap-2">
             {selectedFiles.map((file, index) => (
               <div key={index} className="relative w-20 h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
-                {file.type.startsWith("image/") && file.previewUrl ? (
-                  <img
-                    src={file.previewUrl}
-                    alt={file.name}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                ) : file.type === "application/pdf" ? (
-                  <div className="flex items-center justify-center w-full h-full bg-red-50 rounded-lg">
-                    <span className="text-red-500 font-bold text-sm">PDF</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-blue-50 rounded-lg">
-                    <span className="text-blue-500 font-bold text-sm">DOC</span>
-                  </div>
-                )}
+                {renderFilePreview(file, index)}
                 <button
                   type="button"
                   onClick={() => handleFileRemove(index)}
                   className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none"
+                  aria-label={`Remove file ${file.name}`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -239,7 +330,6 @@ const JobInward: React.FC = () => {
             ))}
           </div>
         </div>
-
 
         {/* Agreement Number */}
         <div className='col-span-6 sm:col-span-3'>
@@ -260,56 +350,34 @@ const JobInward: React.FC = () => {
         <h2 className="text-lg font-bold col-span-6 text-center">Job Details</h2>
 
         {/* Additional Fields */}
-        <div className="col-span-6 sm:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">PMC</label>
-          <input {...register('pmc')} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" />
-        </div>
-        <div className="col-span-6 sm:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Witness</label>
-          <input {...register('witness')} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" />
-        </div>
-        <div className="col-span-6 sm:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Third Title</label>
-          <input {...register('thirdTitle')} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" />
-        </div>
-        <div className="col-span-6 sm:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Fourth Title</label>
-          <input {...register('fourthTitle')} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" />
-        </div>
+        {['pmc', 'witness', 'thirdTitle', 'fourthTitle'].map((field) => (
+          <div key={field} className="col-span-6 sm:col-span-3">
+            <label className="block text-sm font-medium text-gray-700">
+              {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+            </label>
+            <input
+              {...register(field as keyof FormValues)}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+            />
+          </div>
+        ))}
 
         {/* Highlighted Fields */}
-        <div className="col-span-6 sm:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Letter No.</label>
-          <input
-            type="number"
-            {...register('letterNo')}
-            className="mt-1 block w-full p-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
-          />
-        </div>
-        <div className="col-span-6 sm:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Letter Date</label>
-          <input
-            type="datetime-local"
-            {...register('letterDate')}
-            className="mt-1 block w-full p-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
-          />
-        </div>
-        <div className="col-span-6 sm:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Sample Received Date</label>
-          <input
-            type="datetime-local"
-            {...register('sampleReceivedDate')}
-            className="mt-1 block w-full p-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
-          />
-        </div>
-        <div className="col-span-6 sm:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Inward Number (Office)</label>
-          <input
-            type="text"
-            {...register('inwardNumber')}
-            className="mt-1 block w-full p-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
-          />
-        </div>
+        {[
+          { field: 'letterNo', label: 'Letter No.', type: 'number' },
+          { field: 'letterDate', label: 'Letter Date', type: 'date' },
+          { field: 'sampleReceivedDate', label: 'Sample Received Date', type: 'date' },
+          { field: 'inwardNumber', label: 'Inward Number (Office)', type: 'text' }
+        ].map(({ field, label, type }) => (
+          <div key={field} className="col-span-6 sm:col-span-3">
+            <label className="block text-sm font-medium text-gray-700">{label}</label>
+            <input
+              type={type}
+              {...register(field as keyof FormValues)}
+              className="mt-1 block w-full p-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
+            />
+          </div>
+        ))}
 
         {/* Submit Button */}
         <div className="col-span-6 text-right">
@@ -330,17 +398,19 @@ const JobInward: React.FC = () => {
       >
         {isClientModalOpen ? (
           <ClientForm
-            onSubmit={(clientData) => {
-              dispatch(addClient(clientData));
+            onSubmit={async (clientData) => {
+              dispatch(addClient(clientData as any));
               setClientModalOpen(false);
+              await fetchAuthorities();
             }}
             closeModal={() => setClientModalOpen(false)}
           />
         ) : (
           <Contractor
             onSubmit={(contractorData) => {
-              dispatch(addContractor(contractorData));
+              dispatch(addContractor(contractorData as any));
               setContractorModalOpen(false);
+              fetchAgency();
             }}
             closeModal={() => setContractorModalOpen(false)}
           />

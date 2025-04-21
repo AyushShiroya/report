@@ -2,21 +2,24 @@
 
 import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 type FormValues = {
-    ContractorName: string;
-    ContractorMobileNumber: number;
-    ContractorAddress: string;
-    city: string;
-    ContractorPinCode: number;
-    ContractorEmailId: string;
-    ContractorGstNumber: string;
+    ContractorName?: string;
+    ContractorMobileNumber?: number;
+    ContractorAddress?: string;
+    city?: string;
+    ContractorPinCode?: number;
+    ContractorEmailId?: string;
+    ContractorGstNumber: string;  // Only this field is required
 };
 
 interface ContractorFormProps {
-    onSubmit: (contractorData: Omit<FormValues, 'id'>) => void;
+    onSubmit?: (contractorData: FormValues) => void;
     closeModal: () => void;
 }
+
 const Contractor: React.FC<ContractorFormProps> = ({ onSubmit, closeModal }) => {
     const {
         register,
@@ -25,76 +28,97 @@ const Contractor: React.FC<ContractorFormProps> = ({ onSubmit, closeModal }) => 
         reset
     } = useForm<FormValues>();
 
-    const handleFormSubmit: SubmitHandler<FormValues> = (data) => {
-        console.log(data);
-        onSubmit(data); // Call the onSubmit prop with the contractor name
-        reset();
-        closeModal();
-      };
-    
+    const handleFormSubmit: SubmitHandler<FormValues> = async (data) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error('Authentication token not found', { autoClose: 1000 });
+                return;
+            }
+
+            const response = await axios.post('http://localhost:5000/api/agency', data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                }
+            });
+
+            console.log('Success:', response.data);
+
+            toast.success("Agency added successfully!", {
+                autoClose: 1000,
+            });
+
+            reset();
+            closeModal();
+
+            if (onSubmit) {
+                onSubmit(data);
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            
+            let errorMessage = 'Failed to add agency. Please try again.';
+            if (axios.isAxiosError(error) && error.response) {
+                errorMessage = error.response.data.message || errorMessage;
+            }
+            
+            toast.error(errorMessage, {
+                autoClose: 1000,
+            });
+        }
+    };
 
     return (
         <form
             onSubmit={handleSubmit(handleFormSubmit)}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-3"
         >
-            {/* Contractor Name */}
+            {/* Agency Name (Optional) */}
             <div className="md:col-span-2 lg:col-span-3">
                 <label className="block text-sm font-medium text-gray-700">Agency Name</label>
                 <input
-                    {...register('ContractorName', { required: true })}
+                    {...register('ContractorName')}
                     type="text"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
-                {errors.ContractorName && (
-                    <span className="text-sm text-red-500">This field is required</span>
-                )}
             </div>
 
-            {/* Contractor Mobile Number */}
+            {/* Agency Mobile Number (Optional) */}
             <div>
                 <label className="block text-sm font-medium text-gray-700">Agency Mobile Number</label>
                 <input
-                    {...register('ContractorMobileNumber', { required: true })}
+                    {...register('ContractorMobileNumber')}
                     type="number"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
-                {errors.ContractorMobileNumber && (
-                    <span className="text-sm text-red-500">This field is required</span>
-                )}
             </div>
 
-            {/* Contractor Email ID */}
+            {/* Agency Email ID (Optional) */}
             <div>
                 <label className="block text-sm font-medium text-gray-700">Agency Email ID</label>
                 <input
-                    {...register('ContractorEmailId', { required: true })}
+                    {...register('ContractorEmailId')}
                     type="email"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
-                {errors.ContractorEmailId && (
-                    <span className="text-sm text-red-500">This field is required</span>
-                )}
             </div>
 
-            {/* Contractor Address */}
+            {/* Agency Address (Optional) */}
             <div className="md:col-span-2 lg:col-span-3">
                 <label className="block text-sm font-medium text-gray-700">Agency Address</label>
                 <textarea
-                    {...register('ContractorAddress', { required: true })}
+                    {...register('ContractorAddress')}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     rows={3}
                 />
-                {errors.ContractorAddress && (
-                    <span className="text-sm text-red-500">This field is required</span>
-                )}
             </div>
 
-            {/* City */}
+            {/* City (Optional) */}
             <div>
                 <label className="block text-sm font-medium text-gray-700">City</label>
                 <select
-                    {...register('city', { required: true })}
+                    {...register('city')}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 >
                     <option value="">Select City</option>
@@ -102,36 +126,29 @@ const Contractor: React.FC<ContractorFormProps> = ({ onSubmit, closeModal }) => 
                     <option value="Ahmedabad">Ahmedabad</option>
                     <option value="Vadodara">Vadodara</option>
                     <option value="Rajkot">Rajkot</option>
-                    {/* Add more cities as needed */}
                 </select>
-                {errors.city && (
-                    <span className="text-sm text-red-500">This field is required</span>
-                )}
             </div>
 
-            {/* Contractor Pin Code */}
+            {/* Agency Pin Code (Optional) */}
             <div>
                 <label className="block text-sm font-medium text-gray-700">Agency Pin Code</label>
                 <input
-                    {...register('ContractorPinCode', { required: true })}
+                    {...register('ContractorPinCode')}
                     type="number"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
-                {errors.ContractorPinCode && (
-                    <span className="text-sm text-red-500">This field is required</span>
-                )}
             </div>
 
-            {/* Contractor GST Number */}
+            {/* Agency GST Number (Required) */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Agency GST Number</label>
+                <label className="block text-sm font-medium text-gray-700">Agency GST Number*</label>
                 <input
-                    {...register('ContractorGstNumber', { required: true })}
+                    {...register('ContractorGstNumber', { required: "GST Number is required" })}
                     type="text"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
                 {errors.ContractorGstNumber && (
-                    <span className="text-sm text-red-500">This field is required</span>
+                    <span className="text-sm text-red-500">{errors.ContractorGstNumber.message}</span>
                 )}
             </div>
 

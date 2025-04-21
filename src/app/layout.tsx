@@ -10,6 +10,8 @@ import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import store from "@/redux/store";
 import { Provider } from "react-redux";
+import AuthGuard from "@/components/auth/AuthGuard";
+import { usePathname } from "next/navigation";
 
 
 const outfit = Outfit({
@@ -17,17 +19,30 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+const publicRoutes = ["/signin", "/forgot-password"];
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const pathname = usePathname();
+
+  const isPublicRoute = publicRoutes.includes(pathname || "");
+
   return (
     <html lang="en">
       <body className={`${outfit.variable} dark:bg-gray-900`}>
         <Provider store={store}>
           <ThemeProvider>
-            <SidebarProvider>{children}</SidebarProvider>
+            {isPublicRoute ? (
+              children
+            ) : (
+              <SidebarProvider>
+                <AuthGuard>{children}</AuthGuard>
+              </SidebarProvider>
+            )}
           </ThemeProvider>
         </Provider>
       </body>

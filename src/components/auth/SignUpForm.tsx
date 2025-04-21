@@ -1,24 +1,107 @@
 "use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
-import React, { useState } from "react";
+
+type FormData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+};
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [formData, setFormData] = useState<FormData>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Clear existing toasts
+    toast.dismiss();
+
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/users/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
+
+      toast.success("Registration successful! Redirecting...");
+      setTimeout(() => router.push("/signin"), 1500);
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Registration failed";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full overflow-y-auto no-scrollbar">
       <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
-        <Link
+        {/* <Link
           href="/"
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
         >
           <ChevronLeftIcon />
           Back to dashboard
-        </Link>
+        </Link> */}
       </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
@@ -27,7 +110,7 @@ export default function SignUpForm() {
               Sign Up
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign up!
+              Enter your details to create an account!
             </p>
           </div>
           <div>
@@ -83,74 +166,86 @@ export default function SignUpForm() {
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-5">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {/* <!-- First Name --> */}
+                  {/* First Name */}
                   <div className="sm:col-span-1">
                     <Label>
                       First Name<span className="text-error-500">*</span>
                     </Label>
                     <Input
                       type="text"
-                      id="fname"
-                      name="fname"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
                       placeholder="Enter your first name"
+                      required
                     />
                   </div>
-                  {/* <!-- Last Name --> */}
+                  {/* Last Name */}
                   <div className="sm:col-span-1">
                     <Label>
                       Last Name<span className="text-error-500">*</span>
                     </Label>
                     <Input
                       type="text"
-                      id="lname"
-                      name="lname"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
                       placeholder="Enter your last name"
+                      required
                     />
                   </div>
                 </div>
-                {/* <!-- Email --> */}
+                {/* Email */}
                 <div>
                   <Label>
                     Email<span className="text-error-500">*</span>
                   </Label>
                   <Input
                     type="email"
-                    id="email"
                     name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     placeholder="Enter your email"
+                    required
                   />
                 </div>
-                {/* <!-- Password --> */}
+                {/* Password */}
                 <div>
                   <Label>
                     Password<span className="text-error-500">*</span>
                   </Label>
                   <div className="relative">
                     <Input
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
                       placeholder="Enter your password"
                       type={showPassword ? "text" : "password"}
+                      required
+                      // minLength={6}
                     />
-                    <span
+                    <button
+                      type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                      className="absolute z-30 -translate-y-1/2 right-4 top-1/2"
                     >
                       {showPassword ? (
                         <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
                       ) : (
                         <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
                       )}
-                    </span>
+                    </button>
                   </div>
                 </div>
-                {/* <!-- Checkbox --> */}
+                {/* Checkbox */}
                 <div className="flex items-center gap-3">
                   <Checkbox
                     className="w-5 h-5"
                     checked={isChecked}
-                    onChange={setIsChecked}
+                    onChange={() => setIsChecked(!isChecked)}
                   />
                   <p className="inline-block font-normal text-gray-500 dark:text-gray-400">
                     By creating an account means you agree to the{" "}
@@ -163,10 +258,14 @@ export default function SignUpForm() {
                     </span>
                   </p>
                 </div>
-                {/* <!-- Button --> */}
+                {/* Button */}
                 <div>
-                  <button className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
-                    Sign Up
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Processing..." : "Sign Up"}
                   </button>
                 </div>
               </div>
@@ -174,7 +273,7 @@ export default function SignUpForm() {
 
             <div className="mt-5">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-                Already have an account?
+                Already have an account?{" "}
                 <Link
                   href="/signin"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400"

@@ -1,11 +1,21 @@
+"use client";
 import SignInForm from "@/components/auth/SignInForm";
-import { Metadata } from "next";
+import { isAuthenticated } from "@/components/utils/auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export const metadata: Metadata = {
-  title: "Next.js SignIn Page | TailAdmin - Next.js Dashboard Template",
-  description: "This is Next.js Signin Page TailAdmin Dashboard Template",
-};
 
 export default function SignIn() {
+  const router = useRouter();
+
+
+  useEffect(() => {
+    // Only run on client side after mount
+    if (typeof window !== "undefined" && isAuthenticated()) {
+      router.push('/');
+    }
+  }, [router]);
+
+
   return <SignInForm />;
 }

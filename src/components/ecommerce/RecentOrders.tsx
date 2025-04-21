@@ -9,12 +9,10 @@ import Badge from "../ui/badge/Badge";
 
 interface Client {
   clientName: string;
-  // other client properties...
 }
 
 interface Contractor {
   ContractorName: string;
-  // other contractor properties...
 }
 
 export interface JobFormData {
@@ -22,15 +20,15 @@ export interface JobFormData {
   client: Client;
   contractor: Contractor;
   workName: string;
-  agreementNumber: number;
+  agreementNumber: string | number;
   pmc: string;
   witness: string;
   thirdTitle: string;
   fourthTitle: string;
-  letterNo: number;
+  letterNo: string | number;
   letterDate: string;
   sampleReceivedDate: string;
-  inwardNumber: number;
+  inwardNumber: string | number;
 }
 
 interface RecentOrdersProps {
@@ -142,8 +140,8 @@ export default function RecentOrders({ jobForms }: RecentOrdersProps) {
                       getStatus(job) === "Completed"
                         ? "success"
                         : getStatus(job) === "In Progress"
-                        ? "warning"
-                        : "error"
+                          ? "warning"
+                          : "error"
                     }
                   >
                     {getStatus(job)}

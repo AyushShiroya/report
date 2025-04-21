@@ -4,12 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Client and Contractor Types
 export interface Client {
+  [x: string]: string;
   id: string;
   clientName: string;
-  clientMobileNumber: number;
+  // clientMobileNumber: number;
   clientAddress: string;
   city: string;
-  clientPinCode: number;
+  // clientPinCode: number;
   clientEmailId: string;
   clientGstNumber: string;
 }
@@ -62,12 +63,12 @@ const formSlice = createSlice({
       const existingClient = state.clients.find(
         client => client.clientName === action.payload.clientName
       );
-      if (!existingClient) {
-        state.clients.push({
-          id: uuidv4(),
-          ...action.payload,
-        });
-      }
+      // if (!existingClient) {
+      //   state.clients.push({
+      //     id: uuidv4(),
+      //     ...action.payload,
+      //   });
+      // }
     },
     addContractor(state, action: PayloadAction<Omit<Contractor, 'id'>>) {
       const existingContractor = state.contractors.find(

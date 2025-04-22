@@ -44,15 +44,15 @@ const RegisterFormData: React.FC<RegisterFormDataProps> = ({ formEntries }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {formEntries.length > 0 ? (
+            {formEntries?.length > 0 ? (
               formEntries.map((entry) => (
-                <tr key={entry._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{entry.refraneName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(entry.fromDate)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(entry.toDate)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.authority.clientName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.client.ContractorName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(entry.createdAt)}</td>
+                <tr key={entry?._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{entry?.refraneName ? entry?.refraneName : "-"}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(entry?.fromDate ? entry?.fromDate : "-")}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(entry?.toDate ? entry?.toDate : "-")}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry?.authority?.clientName ? entry?.authority?.clientName : '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry?.client?.ContractorName ? entry?.client?.ContractorName : "-"}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(entry?.createdAt ? entry?.createdAt : "-")}</td>
                 </tr>
               ))
             ) : (

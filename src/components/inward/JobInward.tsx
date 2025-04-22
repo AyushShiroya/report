@@ -10,6 +10,7 @@ import Contractor from './Contractor';
 import { RootState } from '../../redux/store';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 interface FileMetadata {
   name: string;
@@ -39,6 +40,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 const JobInward: React.FC = () => {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { clients, contractors } = useSelector((state: RootState) => state.form);
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<FormValues>();
 
@@ -157,6 +159,7 @@ const JobInward: React.FC = () => {
 
         dispatch(addJobForm(jobFormData as any));
         toast.success("Job form submitted successfully!");
+        router.push('/job-view');
 
         // Reset form
         reset();

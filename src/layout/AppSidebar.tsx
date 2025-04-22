@@ -35,6 +35,11 @@ const navItems: NavItem[] = [
     name: "Job Inward",
     path: "/job-inward",
   },
+  // {
+  //   icon: <CalenderIcon />,
+  //   name: "Job View",
+  //   path: "/job-view",
+  // },
   {
     icon: <UserCircleIcon />,
     name: "Register",

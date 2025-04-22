@@ -19,7 +19,7 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
-const publicRoutes = ["/signin", "/forgot-password"];
+const publicRoutes = ["/signin", "/signup", "/forgot-password"];
 
 export default function RootLayout({
   children,

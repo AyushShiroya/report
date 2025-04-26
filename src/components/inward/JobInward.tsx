@@ -231,7 +231,7 @@ const JobInward: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 bg-gray-50 rounded-xl shadow-lg">
+    <div className="max-w-7xl mx-auto p-4 bg-white rounded-xl shadow-lg">
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-6 gap-3">
         {/* Client Selection */}
         <div className="col-span-6 sm:col-span-3">
@@ -256,7 +256,7 @@ const JobInward: React.FC = () => {
               </option>
             ))}
           </select>
-          {errors.clientId && <p className="text-red-500 text-sm mt-1">{errors.clientId.message}</p>}
+          {errors.clientId && <p className="text-red-500 text-sm">{errors.clientId.message}</p>}
         </div>
 
         {/* Contractor Selection */}
@@ -282,7 +282,7 @@ const JobInward: React.FC = () => {
               </option>
             ))}
           </select>
-          {errors.contractorId && <p className="text-red-500 text-sm mt-1">{errors.contractorId.message}</p>}
+          {errors.contractorId && <p className="text-red-500 text-sm">{errors.contractorId.message}</p>}
         </div>
 
         {/* Name of Work */}
@@ -293,7 +293,7 @@ const JobInward: React.FC = () => {
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows={1}
           />
-          {errors.workName && <p className="text-red-500 text-sm mt-1">{errors.workName.message}</p>}
+          {errors.workName && <p className="text-red-500 text-sm">{errors.workName.message}</p>}
         </div>
 
         {/* Document Upload */}
@@ -304,11 +304,11 @@ const JobInward: React.FC = () => {
             multiple
             ref={fileInputRef}
             onChange={handleFileChange}
-            className="mt-1 w-full p-2 border rounded-md"
+            className="mt-1 w-full p-[5px] border  border-gray-300 rounded-md"
           />
           <div className="mt-2 grid grid-cols-4 gap-2">
             {selectedFiles.map((file, index) => (
-              <div key={index} className="relative w-20 h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+              <div key={index} className="relative w-15 h-15 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
                 {renderFilePreview(file, index)}
                 <button
                   type="button"
@@ -318,7 +318,7 @@ const JobInward: React.FC = () => {
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
+                    className="h-3 w-3"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -343,7 +343,7 @@ const JobInward: React.FC = () => {
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {errors.agreementNumber && (
-            <p className="text-red-500 text-sm mt-1">{errors.agreementNumber.message}</p>
+            <p className="text-red-500 text-sm">{errors.agreementNumber.message}</p>
           )}
         </div>
 
@@ -353,34 +353,39 @@ const JobInward: React.FC = () => {
         <h2 className="text-lg font-bold col-span-6 text-center">Job Details</h2>
 
         {/* Additional Fields */}
-        {['pmc', 'witness', 'thirdTitle', 'fourthTitle'].map((field) => (
-          <div key={field} className="col-span-6 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
-            </label>
-            <input
-              {...register(field as keyof FormValues)}
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-        ))}
+        <div className="col-span-6 grid grid-cols-12 gap-4">
+          {['pmc', 'witness', 'thirdTitle', 'fourthTitle'].map((field) => (
+            <div key={field} className="col-span-12 sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700">
+                {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+              </label>
+              <input
+                {...register(field as keyof FormValues)}
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              />
+            </div>
+          ))}
+        </div>
+
 
         {/* Highlighted Fields */}
-        {[
-          { field: 'letterNo', label: 'Letter No.', type: 'number' },
-          { field: 'letterDate', label: 'Letter Date', type: 'date' },
-          { field: 'sampleReceivedDate', label: 'Sample Received Date', type: 'date' },
-          { field: 'inwardNumber', label: 'Inward Number (Office)', type: 'text' }
-        ].map(({ field, label, type }) => (
-          <div key={field} className="col-span-6 sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700">{label}</label>
-            <input
-              type={type}
-              {...register(field as keyof FormValues)}
-              className="mt-1 block w-full p-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
-            />
-          </div>
-        ))}
+        <div className="col-span-6 grid grid-cols-12 gap-4">
+          {[
+            { field: 'letterNo', label: 'Letter No.', type: 'number' },
+            { field: 'letterDate', label: 'Letter Date', type: 'date' },
+            { field: 'sampleReceivedDate', label: 'Sample Received Date', type: 'date' },
+            { field: 'inwardNumber', label: 'Inward Number (Office)', type: 'text' }
+          ].map(({ field, label, type }) => (
+            <div key={field} className="col-span-12 sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700">{label}</label>
+              <input
+                type={type}
+                {...register(field as keyof FormValues)}
+                className="mt-1 block w-full p-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
+              />
+            </div>
+          ))}
+        </div>
 
         {/* Submit Button */}
         <div className="col-span-6 text-right">

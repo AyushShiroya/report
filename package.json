@@ -29,6 +29,7 @@
     "date-fns": "^4.1.0",
     "flatpickr": "^4.6.13",
     "i": "^0.3.7",
+    "lodash": "^4.17.21",
     "next": "^15.2.3",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",
@@ -49,6 +50,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@svgr/webpack": "^8.1.0",
+    "@types/lodash": "^4.17.16",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

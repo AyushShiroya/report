@@ -30,9 +30,9 @@ export default function AdminLayout({
         className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
       >
         {/* Header */}
-        <AppHeader />
+        {/* <AppHeader /> */}
         {/* Page Content */}
-        <div className="p-4 mx-auto max-w-screen-2xl md:p-6">{children}</div>
+        <div className="p-1 mx-auto max-w-screen-2xl md:p-1">{children}</div>
       </div>
     </div>
   );

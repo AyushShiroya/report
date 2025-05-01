@@ -1,10 +1,12 @@
 // src/redux/store.ts
 import { configureStore } from '@reduxjs/toolkit';
 import formReducer from './formSlice';
+import jobFormReducer from './jobFormSlice';
 
 const store = configureStore({
   reducer: {
-    form: formReducer, 
+    form: formReducer,
+    jobForms: jobFormReducer,
   },
 });
 

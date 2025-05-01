@@ -1,7 +1,6 @@
 "use client";
 
-import axios from 'axios';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Table,
     TableBody,
@@ -9,7 +8,9 @@ import {
     TableHeader,
     TableRow,
 } from "../ui/table";
-import Button from '../ui/button/Button';
+import { AppDispatch, RootState } from '@/redux/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchJobForms, initialFilters, resetFilters, setFilters } from '@/redux/jobFormSlice';
 
 interface JobFormData {
     id: string;
@@ -27,29 +28,6 @@ interface JobFormData {
     inwardNumber: string | number;
 }
 
-interface DebouncedFunction<T extends (...args: any[]) => any> {
-    (...args: Parameters<T>): void;
-    cancel: () => void;
-}
-
-const debounce = <T extends (...args: any[]) => any>(
-    func: T,
-    delay: number
-): DebouncedFunction<T> => {
-    let timer: NodeJS.Timeout;
-
-    const debouncedFunction = (...args: Parameters<T>) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => func(...args), delay);
-    };
-
-    debouncedFunction.cancel = () => {
-        clearTimeout(timer);
-    };
-
-    return debouncedFunction;
-};
-
 interface Filters {
     clientName: string;
     contractorName: string;
@@ -66,116 +44,36 @@ interface Filters {
 }
 
 const JobView = () => {
-    const [jobForms, setJobForms] = useState<JobFormData[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState<Filters>({
-        clientName: '',
-        contractorName: '',
-        workName: '',
-        agreementNumber: '',
-        letterDate: '',
-        pmc: '',
-        witness: '',
-        thirdTitle: '',
-        fourthTitle: '',
-        letterNo: '',
-        sampleReceivedDate: '',
-        inwardNumber: '',
-    });
+    const dispatch = useDispatch<AppDispatch>();
+    const { jobForms, loading, filters } = useSelector((state: RootState) => state.jobForms);
     const [popoverOpen, setPopoverOpen] = useState(false);
+    const [localFilters, setLocalFilters] = useState<Filters>(filters);
+
+    // Load initial data when component mounts
+    useEffect(() => {
+        dispatch(fetchJobForms(filters));
+    }, [dispatch]);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFilters(prevFilters => ({
-            ...prevFilters,
-            [name]: value
-        }));
+        setLocalFilters(prev => ({ ...prev, [name]: value }));
     };
-
-    const fetchData = useCallback(async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('Authentication token not found');
-
-            const {
-                clientName, contractorName, workName,
-                agreementNumber, letterDate, pmc, witness,
-                thirdTitle, fourthTitle, letterNo, sampleReceivedDate, inwardNumber
-            } = filters;
-
-            const response = await axios.get('http://localhost:5000/api/alljobinwards', {
-                headers: { 'Authorization': token },
-                params: {
-                    clientName, contractorName, workName,
-                    agreementNumber, letterDate, pmc, witness,
-                    thirdTitle, fourthTitle, letterNo, sampleReceivedDate, inwardNumber
-                }
-            });
-
-            if (response.data.success) {
-                const transformedData = response.data.data.map((job: any) => ({
-                    id: job._id,
-                    client: { clientName: job.clientId.clientName },
-                    contractor: { ContractorName: job.contractorId.ContractorName },
-                    workName: job.workName,
-                    agreementNumber: job.agreementNumber,
-                    pmc: job.pmc,
-                    witness: job.witness,
-                    thirdTitle: job.thirdTitle,
-                    fourthTitle: job.fourthTitle,
-                    letterNo: job.letterNo,
-                    letterDate: job.letterDate,
-                    sampleReceivedDate: job.sampleReceivedDate,
-                    inwardNumber: job.inwardNumber,
-                }));
-                setJobForms(transformedData);
-            } else {
-                throw new Error(response.data.message || 'Failed to fetch data');
-            }
-        } catch (err) {
-            console.error("API Error:", err);
-        } finally {
-            setLoading(false);
-        }
-    }, [filters]);
-
-    const debouncedFetchData = useCallback(debounce(fetchData, 500), [fetchData]);
-
-    const applyFilters = async () => {
-        debouncedFetchData.cancel();
-        await fetchData();
-    };
-
-    useEffect(() => {
-        debouncedFetchData();
-        return () => {
-            debouncedFetchData.cancel();
-        };
-    }, [debouncedFetchData]);
 
     const togglePopover = () => setPopoverOpen(!popoverOpen);
 
     const handleApply = () => {
-        applyFilters();
+        // Update Redux filters with local filter values
+        dispatch(setFilters(localFilters));
+        // Fetch data with the new filters
+        dispatch(fetchJobForms(localFilters));
         togglePopover();
     };
 
     const handleCancel = () => {
-        setFilters({
-            clientName: '',
-            contractorName: '',
-            workName: '',
-            agreementNumber: '',
-            letterDate: '',
-            pmc: '',
-            witness: '',
-            thirdTitle: '',
-            fourthTitle: '',
-            letterNo: '',
-            sampleReceivedDate: '',
-            inwardNumber: '',
-        });
+        // Reset both local and Redux filters
+        setLocalFilters(initialFilters);
+        dispatch(resetFilters());
+        dispatch(fetchJobForms(initialFilters));
         togglePopover();
     };
 
@@ -220,20 +118,20 @@ const JobView = () => {
                     }}
                 >
                     <style>{`
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .filter-field:hover label {
-                color: #2563eb;
-            }
-            .filter-field:hover input {
-                border-color: #93c5fd;
-            }
-        `}</style>
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: translateY(-10px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        .filter-field:hover label {
+                            color: #2563eb;
+                        }
+                        .filter-field:hover input {
+                            border-color: #93c5fd;
+                        }
+                    `}</style>
 
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold text-gray-800">Filter Jobs</h3>
+                        <h3 className="text-lg font-semibold text-black-800">Filter Jobs</h3>
                         <button
                             onClick={togglePopover}
                             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -253,7 +151,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="clientName"
-                                value={filters.clientName}
+                                value={localFilters.clientName}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Authority..."
@@ -267,7 +165,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="contractorName"
-                                value={filters.contractorName}
+                                value={localFilters.contractorName}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Agency..."
@@ -281,7 +179,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="workName"
-                                value={filters.workName}
+                                value={localFilters.workName}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Work..."
@@ -296,7 +194,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="agreementNumber"
-                                value={filters.agreementNumber}
+                                value={localFilters.agreementNumber}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Agreement..."
@@ -310,7 +208,7 @@ const JobView = () => {
                             <input
                                 type="date"
                                 name="letterDate"
-                                value={filters.letterDate}
+                                value={localFilters.letterDate}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                             />
@@ -323,7 +221,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="pmc"
-                                value={filters.pmc}
+                                value={localFilters.pmc}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="PMC..."
@@ -338,7 +236,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="witness"
-                                value={filters.witness}
+                                value={localFilters.witness}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Witness..."
@@ -351,7 +249,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="thirdTitle"
-                                value={filters.thirdTitle}
+                                value={localFilters.thirdTitle}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Third Title..."
@@ -363,7 +261,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="fourthTitle"
-                                value={filters.fourthTitle}
+                                value={localFilters.fourthTitle}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Fourth Title..."
@@ -375,7 +273,7 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="letterNo"
-                                value={filters.letterNo}
+                                value={localFilters.letterNo}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Letter No..."
@@ -388,7 +286,7 @@ const JobView = () => {
                             <input
                                 type="date"
                                 name="sampleReceivedDate"
-                                value={filters.sampleReceivedDate}
+                                value={localFilters.sampleReceivedDate}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                             />
@@ -399,13 +297,12 @@ const JobView = () => {
                             <input
                                 type="text"
                                 name="inwardNumber"
-                                value={filters.inwardNumber}
+                                value={localFilters.inwardNumber}
                                 onChange={handleFilterChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                 placeholder="Inward No..."
                             />
                         </div>
-
                     </div>
 
                     <div className="flex justify-end space-x-3">
@@ -442,7 +339,6 @@ const JobView = () => {
                                     <TableCell isHeader className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Third Title</TableCell>
                                     <TableCell isHeader className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fourth Title</TableCell>
                                     <TableCell isHeader className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Received</TableCell>
-
                                 </TableRow>
                             </TableHeader>
                             <TableBody className="divide-y divide-gray-100">
@@ -460,7 +356,6 @@ const JobView = () => {
                                         <TableCell className="px-4 py-2 text-[12px] text-gray-700">{job.thirdTitle}</TableCell>
                                         <TableCell className="px-4 py-2 text-[12px] text-gray-700">{job.fourthTitle}</TableCell>
                                         <TableCell className="px-4 py-2 text-[12px] text-gray-700">{new Date(job.sampleReceivedDate).toLocaleDateString()}</TableCell>
-
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -468,7 +363,6 @@ const JobView = () => {
                     </div>
                 </div>
             </div>
-
         </div>
     );
 };

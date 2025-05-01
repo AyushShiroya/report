@@ -49,7 +49,7 @@ export default function SignInForm() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/users/login",
+        `https://report-be.onrender.com/api/users/login`,
         formData,
         {
           headers: {
@@ -62,7 +62,8 @@ export default function SignInForm() {
 
       console.log("Login successful, received token:", data.token);
       setAuthToken(data.token);
-      window.location.href = "/"; 
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.location.href = "/";
       router.push("/");
       toast.success("Login successful!");
 
@@ -147,7 +148,7 @@ export default function SignInForm() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
+                  {/* <div className="flex items-center justify-between">
                     <Checkbox
                       id="remember-me"
                       label="Remember me"
@@ -160,7 +161,7 @@ export default function SignInForm() {
                     >
                       Forgot password?
                     </Link>
-                  </div>
+                  </div> */}
                   <button
                     type="submit"
                     disabled={loading}

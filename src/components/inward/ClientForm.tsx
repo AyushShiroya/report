@@ -43,34 +43,34 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSubmit, closeModal }) => {
                 toast.error('Authentication token not found', { autoClose: 1000 });
                 return;
             }
-    
-            const response = await axios.post('http://localhost:5000/api/jobinwards', data, {
+
+            const response = await axios.post(`https://report-be.onrender.com/api/jobinwards`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `${token}`
                 }
             });
-    
+
             console.log('Success:', response.data);
-    
+
             toast.success("Authority added successfully!", {
                 autoClose: 1000,
             });
-    
+
             reset();
             closeModal();
-    
+
             if (onSubmit) {
                 onSubmit(data);
             }
         } catch (error) {
             console.error('Error submitting form:', error);
-            
+
             let errorMessage = 'Failed to add authority. Please try again.';
             if (axios.isAxiosError(error) && error.response) {
                 errorMessage = error.response.data.message || errorMessage;
             }
-            
+
             toast.error(errorMessage, {
                 autoClose: 1000,
             });

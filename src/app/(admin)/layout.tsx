@@ -32,7 +32,7 @@ export default function AdminLayout({
         {/* Header */}
         {/* <AppHeader /> */}
         {/* Page Content */}
-        <div className="p-1 mx-auto max-w-screen-2xl md:p-1">{children}</div>
+        <div className="p-1 mx-auto max-w-screen-2xl md:p-3">{children}</div>
       </div>
     </div>
   );

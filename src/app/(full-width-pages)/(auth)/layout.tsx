@@ -22,17 +22,36 @@ export default function AuthLayout({
               <GridShape />
               <div className="flex flex-col items-center max-w-xs">
                 <Link href="/" className="block mb-4">
-                  <Image
-                    width={231}
-                    height={48}
-                    src="./images/logo/auth-logo.svg"
-                    alt="Logo"
-                  />
+                  <div className="flex items-center space-x-3">
+                    {/* SVG Report Icon with Gradient */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-15 h-15 text-blue-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"
+                      />
+                    </svg>
+
+                    {/* REPORT label */}
+                    <span className="text-5xl font-bold text-blue-600 tracking-wide">
+                      REPORT
+                    </span>
+                  </div>
                 </Link>
-                <p className="text-center text-gray-400 dark:text-white/60">
-                  Free and Open-Source Tailwind CSS Admin Dashboard Template
+
+                {/* Slogan below */}
+                <p className="mt-2 text-center text-gray-500 dark:text-white/70 text-sm px-4">
+                  Empower your data. Simplify your success.
                 </p>
               </div>
+
             </div>
           </div>
           <div className="fixed bottom-6 right-6 z-50 hidden sm:block">

@@ -48,6 +48,7 @@ interface RegisterFormDataProps {
   authorities: Authority[];
   agencies: Agency[];
   fetchFormEntries: (customFilters?: any) => Promise<void>;
+  loading: boolean
 }
 
 const RegisterFormData: React.FC<RegisterFormDataProps> = ({
@@ -56,7 +57,8 @@ const RegisterFormData: React.FC<RegisterFormDataProps> = ({
   onFilterChange,
   authorities,
   agencies,
-  fetchFormEntries
+  fetchFormEntries,
+  loading
 }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isApplyingFilters, setIsApplyingFilters] = useState(false);
@@ -107,6 +109,14 @@ const RegisterFormData: React.FC<RegisterFormDataProps> = ({
       setIsApplyingFilters(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-4 mt-8 bg-white rounded-xl shadow-lg">
@@ -163,7 +173,7 @@ const RegisterFormData: React.FC<RegisterFormDataProps> = ({
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">Filter Form Entries</h3>
+            <h3 className="text-lg font-semibold text-black-800 mb-4">Form Entries</h3>
 
             {/* 6x6 Grid for Date Fields */}
             <div className="grid grid-cols-12 gap-4 mb-4">
@@ -237,20 +247,19 @@ const RegisterFormData: React.FC<RegisterFormDataProps> = ({
               />
             </div>
 
-            <div className="flex justify-between mt-6">
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={handleResetFilter}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
+                className="px-4 py-2 rounded-lg bg-rose-50 text-rose-600 border-rose-200 border-2 hover:bg-rose-100 hover:text-rose-700 hover:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
               >
                 Reset
               </button>
               <button
                 onClick={handleApplyFilter}
                 disabled={isApplyingFilters}
-                className={`bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors ${isApplyingFilters ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                className="px-4 py-2 hover:bg-black hover:text-white rounded-lg bg-white text-black border-black border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
               >
-                {isApplyingFilters ? 'Applying...' : 'Apply'}
+                Apply  {isApplyingFilters ? 'Applying...' : 'Apply'}
               </button>
             </div>
           </div>

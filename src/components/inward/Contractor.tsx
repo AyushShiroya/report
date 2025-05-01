@@ -36,7 +36,7 @@ const Contractor: React.FC<ContractorFormProps> = ({ onSubmit, closeModal }) => 
                 return;
             }
 
-            const response = await axios.post('http://localhost:5000/api/agency', data, {
+            const response = await axios.post(`https://report-be.onrender.com/api/agency`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `${token}`
@@ -57,12 +57,12 @@ const Contractor: React.FC<ContractorFormProps> = ({ onSubmit, closeModal }) => 
             }
         } catch (error) {
             console.error('Error submitting form:', error);
-            
+
             let errorMessage = 'Failed to add agency. Please try again.';
             if (axios.isAxiosError(error) && error.response) {
                 errorMessage = error.response.data.message || errorMessage;
             }
-            
+
             toast.error(errorMessage, {
                 autoClose: 1000,
             });

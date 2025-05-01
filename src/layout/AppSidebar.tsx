@@ -285,13 +285,13 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-    className={`fixed mt-16 flex flex-col justify-between lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col justify-between lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
       ${isExpanded || isMobileOpen
-        ? "w-[290px]"
-        : isHovered
           ? "w-[290px]"
-          : "w-[90px]"
-      }
+          : isHovered
+            ? "w-[290px]"
+            : "w-[90px]"
+        }
       ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
       lg:translate-x-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
@@ -302,32 +302,30 @@ const AppSidebar: React.FC = () => {
           }`}
       >
         <Link href="/">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
-          ) : (
-            <Image
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
-          )}
-        </Link>
+  <div className="flex items-center space-x-4">
+    {/* SVG Report Icon */}
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-10 h-10 text-blue-600"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"
+      />
+    </svg>
+
+    {/* Text - only show when expanded/hovered/open */}
+    {(isExpanded || isHovered || isMobileOpen) && (
+      <label className="text-[40px] font-semibold text-blue-600">REPORT</label>
+    )}
+  </div>
+</Link>
+
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar flex-1">
         <nav className="mb-6">
@@ -368,7 +366,7 @@ const AppSidebar: React.FC = () => {
         {isExpanded || isHovered || isMobileOpen ? null : null}
       </div>
       <div>
-      <SidebarUserSection />
+        <SidebarUserSection />
       </div>
     </aside>
   );

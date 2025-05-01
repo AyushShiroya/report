@@ -112,13 +112,13 @@ const RegisterForm = () => {
 
       const { fromDate, toDate, refraneName, authority, client } = customFilters || filters;
 
-      const response = await axios.get('http://localhost:5000/api/formentry', {
+      const response = await axios.get(`https://report-be.onrender.com/api/formentry`, {
         headers: { 'Authorization': token },
         params: {
-          fromDate, 
-          toDate, 
-          refraneName, 
-          authority, 
+          fromDate,
+          toDate,
+          refraneName,
+          authority,
           client
         }
       });
@@ -138,7 +138,7 @@ const RegisterForm = () => {
 
   const fetchAuthorities = async () => {
     try {
-      const data = await fetchWithAuth('http://localhost:5000/api/jobinwards');
+      const data = await fetchWithAuth(`https://report-be.onrender.com/api/jobinwards`);
       setAuthorities(data.data);
     } catch (error) {
       console.error('Error fetching authorities:', error);
@@ -148,7 +148,7 @@ const RegisterForm = () => {
 
   const fetchAgencies = async () => {
     try {
-      const data = await fetchWithAuth('http://localhost:5000/api/agency');
+      const data = await fetchWithAuth(`https://report-be.onrender.com/api/agency`);
       setAgencies(data.data);
     } catch (error) {
       console.error('Error fetching agencies:', error);
@@ -166,7 +166,7 @@ const RegisterForm = () => {
       }
 
       const response = await axios.post(
-        'http://localhost:5000/api/formentry',
+        `https://report-be.onrender.com/api/formentry`,
         data,
         {
           headers: {
@@ -277,24 +277,24 @@ const RegisterForm = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-6 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                isSubmitting
-                  ? 'bg-green-400 cursor-not-allowed'
-                  : 'bg-green-500 hover:bg-green-600'
-              }`}
+              className={`px-6 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${isSubmitting
+                ? 'bg-green-400 cursor-not-allowed'
+                : 'bg-green-500 hover:bg-green-600'
+                }`}
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
           </div>
         </form>
       </div>
-      <RegisterFormData 
-        formEntries={formEntries} 
+      <RegisterFormData
+        formEntries={formEntries}
         filters={filters}
         onFilterChange={(updatedFilters: Filters) => setFilters(updatedFilters)}
         authorities={authorities}
         agencies={agencies}
         fetchFormEntries={fetchFormEntries}
+        loading={loading}
       />
     </>
   );

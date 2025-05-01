@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function Register() {
     return (
         <div>
-            <div className="p-5 lg:p-4">
+            <div className="p-1 lg:p-1">
                 <h3 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-5">
                     Job Register Form
                 </h3>

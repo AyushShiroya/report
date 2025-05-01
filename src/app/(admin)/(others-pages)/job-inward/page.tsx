@@ -13,7 +13,7 @@ export default function Job() {
     };
     return (
         <div>
-            <div className="p-5 lg:p-4">
+            <div className="p-1 lg:p-1">
                 <div className="flex items-center justify-between mb-4"> {/* Flex container */}
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
                         Job Inward Form

@@ -24,7 +24,7 @@ export default function Ecommerce() {
     const fetchStats = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:10000/api/alljobinwards/stats', {
+        const res = await axios.get('https://report-be.onrender.com/api/alljobinwards/stats', {
           headers: {
             Authorization: token,
           },

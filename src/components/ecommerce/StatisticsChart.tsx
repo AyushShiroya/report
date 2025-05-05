@@ -1,124 +1,157 @@
 "use client";
-import React from "react";
-// import Chart from "react-apexcharts";
-import { ApexOptions } from "apexcharts";
-import ChartTab from "../common/ChartTab";
+import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import axios from "axios";
+import { ApexOptions } from "apexcharts";
+import { motion } from "framer-motion";
 
-// Dynamically import the ReactApexChart component
+
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
 export default function StatisticsChart() {
+  const [seriesData, setSeriesData] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  const bubbleColors = [
+    "#FF5733", "#33FF57", "#3357FF", "#FF33A8", "#A833FF", "#33FFF5",
+    "#FF8F33", "#8FFF33", "#338FFF", "#FF33D4", "#D433FF", "#33FFD4"
+  ];
+
+  useEffect(() => {
+    const fetchMonthlyStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          "https://report-be.onrender.com/api/alljobinwards/stats/monthly",
+          {
+            headers: { Authorization: token },
+          }
+        );
+
+        const apiData = response.data.data;
+
+        // Create 12 series, one for each month, with a distinct color
+        const formattedSeries = [{
+          name: "Monthly Targets",
+          data: apiData.map((value: number, index: number) => ({
+            x: months[index],
+            y: value,
+            z: Math.max(value * 5, 8),
+            fillColor: bubbleColors[index], // individual color
+          }))
+        }];
+
+        setSeriesData(formattedSeries);
+      } catch (error) {
+        console.error("Error fetching monthly stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMonthlyStats();
+  }, []);
   const options: ApexOptions = {
-    legend: {
-      show: false, // Hide legend
-      position: "top",
-      horizontalAlign: "left",
-    },
-    colors: ["#465FFF", "#9CB9FF"], // Define line colors
     chart: {
-      fontFamily: "Outfit, sans-serif",
+      type: "bubble",
       height: 310,
-      type: "line", // Set the chart type to 'line'
-      toolbar: {
-        show: false, // Hide chart toolbar
+      toolbar: { show: false },
+      animations: {
+        enabled: true,
+        speed: 800,
       },
+      fontFamily: "Outfit, sans-serif",
+    },
+    colors: bubbleColors,
+    dataLabels: { enabled: false },
+    fill: {
+      opacity: 0.9,
+      type: "solid",
     },
     stroke: {
-      curve: "straight", // Define the line style (straight, smooth, or step)
-      width: [2, 2], // Line width for each dataset
-    },
-
-    fill: {
-      type: "gradient",
-      gradient: {
-        opacityFrom: 0.55,
-        opacityTo: 0,
-      },
-    },
-    markers: {
-      size: 0, // Size of the marker points
-      strokeColors: "#fff", // Marker border color
-      strokeWidth: 2,
-      hover: {
-        size: 6, // Marker size on hover
-      },
-    },
-    grid: {
-      xaxis: {
-        lines: {
-          show: false, // Hide grid lines on x-axis
-        },
-      },
-      yaxis: {
-        lines: {
-          show: true, // Show grid lines on y-axis
-        },
-      },
-    },
-    dataLabels: {
-      enabled: false, // Disable data labels
-    },
-    tooltip: {
-      enabled: true, // Enable tooltip
-      x: {
-        format: "dd MMM yyyy", // Format for x-axis tooltip
-      },
+      width: 1,
+      colors: ["#fff"],
     },
     xaxis: {
-      type: "category", // Category-based x-axis
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
-      axisBorder: {
-        show: false, // Hide x-axis border
-      },
-      axisTicks: {
-        show: false, // Hide x-axis ticks
-      },
-      tooltip: {
-        enabled: false, // Disable tooltip for x-axis points
+      type: "category", // 👈 switch from numeric to category
+      categories: months,
+      min: 0,
+      max: 13,
+      labels: {
+        style: { fontSize: "13px", colors: "#374151" },
       },
     },
     yaxis: {
+      min: 0,
+      max: 15,
+      tickAmount: 5,
       labels: {
         style: {
-          fontSize: "12px", // Adjust font size for y-axis labels
-          colors: ["#6B7280"], // Color of the labels
+          fontSize: "13px",
+          colors: "#374151",
         },
       },
-      title: {
-        text: "", // Remove y-axis title
-        style: {
-          fontSize: "0px",
-        },
+    },
+    tooltip: {
+      theme: "light",
+      custom: ({ series, seriesIndex, dataPointIndex, w }) => {
+        const point = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
+        return `<div style="padding: 8px;">
+          <strong>${months[point.x - 1]}</strong><br />
+          Jobs: ${point.y}
+        </div>`;
+      },
+    },
+    plotOptions: {
+      bubble: {
+        minBubbleRadius: 8,
+        maxBubbleRadius: 40,
       },
     },
   };
 
-  const series = [
-    {
-      name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
-    },
-    {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-    },
-  ];
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex h-[350px] items-center justify-center rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6"
+      >
+        <div className="flex flex-col items-center">
+          <motion.div
+            animate={{
+              rotate: 360,
+              scale: [1, 1.2, 1]
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="h-12 w-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg animate-pulse"
+          />
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mt-3 text-gray-500"
+          >
+            Loading job data...
+          </motion.p>
+        </div>
+      </motion.div>
+    );
+  }
+
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
@@ -130,17 +163,14 @@ export default function StatisticsChart() {
             Target you’ve set for each month
           </p>
         </div>
-        <div className="flex items-start w-full gap-3 sm:justify-end">
-          <ChartTab />
-        </div>
       </div>
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="min-w-[1000px] xl:min-w-full">
           <ReactApexChart
             options={options}
-            series={series}
-            type="area"
+            series={seriesData}
+            type="bubble"
             height={310}
           />
         </div>
